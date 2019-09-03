@@ -63,7 +63,25 @@ device = torch.device("cuda" if args.cuda else "cpu")
 # Load data
 ###############################################################################
 
-corpus = data.Corpus(args.data)
+#corpus = data.Corpus(args.data)
+
+import torchtext
+from torchtext.data.utils import get_tokenizer
+#import spacy
+#spacy_en = spacy.load('en')
+#def tokenize_en(text):
+#    return [tok.text for tok in spacy_en.tokenizer(text)][::-1]
+TEXT = torchtext.data.Field(tokenize=get_tokenizer(None),
+                            init_token='<sos>',
+                            eos_token='<eos>',
+                            lower=True)
+train_txt, valid_txt, test_txt = torchtext.datasets.WikiText2.splits(TEXT)
+TEXT.build_vocab(train_txt)
+#train_data = TEXT.numericalize([train_txt.examples[0].text])
+#nbatch = train_data.size(0) // BATCH_SIZE
+#train_data = train_data.narrow(0, 0, nbatch * BATCH_SIZE)
+#train_data = train_data.view(BATCH_SIZE, -1).t().contiguous()
+
 
 # Starting from sequential data, batchify arranges the dataset into columns.
 # For instance, with the alphabet as the sequence and batch size 4, we'd get
@@ -78,6 +96,7 @@ corpus = data.Corpus(args.data)
 # batch processing.
 
 def batchify(data, bsz):
+    data = TEXT.numericalize([data.examples[0].text])
     # Work out how cleanly we can divide the dataset into bsz parts.
     nbatch = data.size(0) // bsz
     # Trim off any extra elements that wouldn't cleanly fit (remainders).
@@ -87,15 +106,20 @@ def batchify(data, bsz):
     return data.to(device)
 
 eval_batch_size = 10
-train_data = batchify(corpus.train, args.batch_size)
-val_data = batchify(corpus.valid, eval_batch_size)
-test_data = batchify(corpus.test, eval_batch_size)
+train_data = batchify(train_txt, args.batch_size)
+print("train_data size, value: ", train_data.size(), train_data)
+valid_data = batchify(valid_txt, eval_batch_size)
+print("valid_data size, value: ", valid_data.size(), valid_data)
+test_data = batchify(test_txt, eval_batch_size)
+print("test_data size, value: ", test_data.size(), test_data)
 
 ###############################################################################
 # Build the model
 ###############################################################################
 
-ntokens = len(corpus.dictionary)
+#  [TODO]
+#ntokens = len(corpus.dictionary)
+ntokens = len(TEXT.vocab.stoi)
 if args.model == 'Transformer':
     model = model.TransformerModel(ntokens, args.emsize, args.nhead, args.nhid, args.nlayers, args.dropout).to(device)
 else:
@@ -137,7 +161,9 @@ def evaluate(data_source):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0.
-    ntokens = len(corpus.dictionary)
+#i [TODO]
+#  ntokens = len(corpus.dictionary)
+    ntokens = len(TEXT.vocab.stoi)
     if args.model != 'Transformer':
         hidden = model.init_hidden(eval_batch_size)
     with torch.no_grad():
@@ -158,7 +184,9 @@ def train():
     model.train()
     total_loss = 0.
     start_time = time.time()
-    ntokens = len(corpus.dictionary)
+#i [TODO]
+#    ntokens = len(corpus.dictionary)
+    ntokens = len(TEXT.vocab.stoi)
     if args.model != 'Transformer':
         hidden = model.init_hidden(args.batch_size)
     for batch, i in enumerate(range(0, train_data.size(0) - 1, args.bptt)):
