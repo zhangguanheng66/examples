@@ -71,7 +71,7 @@ from torchtext.data.utils import get_tokenizer
 #spacy_en = spacy.load('en')
 #def tokenize_en(text):
 #    return [tok.text for tok in spacy_en.tokenizer(text)][::-1]
-TEXT = torchtext.data.Field(tokenize=get_tokenizer(None),
+TEXT = torchtext.data.Field(tokenize=get_tokenizer("basic_english"),
                             init_token='<sos>',
                             eos_token='<eos>',
                             lower=True)
