@@ -75,7 +75,7 @@ TEXT = torchtext.data.Field(tokenize=get_tokenizer(None),
                             init_token='<sos>',
                             eos_token='<eos>',
                             lower=True)
-train_txt, valid_txt, test_txt = torchtext.datasets.WikiText2.splits(TEXT)
+train_txt, val_txt, test_txt = torchtext.datasets.WikiText2.splits(TEXT)
 TEXT.build_vocab(train_txt)
 #train_data = TEXT.numericalize([train_txt.examples[0].text])
 #nbatch = train_data.size(0) // BATCH_SIZE
@@ -107,11 +107,8 @@ def batchify(data, bsz):
 
 eval_batch_size = 10
 train_data = batchify(train_txt, args.batch_size)
-print("train_data size, value: ", train_data.size(), train_data)
-valid_data = batchify(valid_txt, eval_batch_size)
-print("valid_data size, value: ", valid_data.size(), valid_data)
+val_data = batchify(val_txt, eval_batch_size)
 test_data = batchify(test_txt, eval_batch_size)
-print("test_data size, value: ", test_data.size(), test_data)
 
 ###############################################################################
 # Build the model
